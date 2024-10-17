@@ -465,6 +465,8 @@ def filter_unique(mols, crit=0.3):
                 break
         if unique:
             unique_mols.append(mol_i)
+
+    
     return unique_mols
 
 def no_enantiomer_helper(info1, info2):
