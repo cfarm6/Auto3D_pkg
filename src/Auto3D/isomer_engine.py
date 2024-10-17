@@ -243,10 +243,10 @@ class rd_isomer_sdf(object):
         self.np = np
 
     def run(self):
-        supp = Chem.SDMolSupplier(self.sdf, removeHs=False)
-        with Chem.SDWriter(self.enumerated_sdf) as writer:
+        supp = Chem.MultithreadedSDMolSupplier(self.sdf, removeHs=False, numWriterThreads=self.np)
+        with Chem.SDWriter(self.enumerated_sdf, ) as writer:
             for mol in tqdm(supp):
-                #enumerate conformers
+                # enumerate conformers
                 mol2 = Chem.AddHs(mol)
                 if self.n_conformers is None:
                     # n_conformers = min(3 ** num_rotatable_bonds, 100)
@@ -258,7 +258,7 @@ class rd_isomer_sdf(object):
                 else:
                     n_conformers = self.n_conformers
                 AllChem.EmbedMultipleConfs(mol2, numConfs=n_conformers, numThreads=self.np, pruneRmsThresh=self.threshold)
-                #set conformer names
+                # set conformer names
                 name = mol.GetProp('_Name')
                 for i, conf in enumerate(mol2.GetConformers()):
                     # mol2.ClearProp('ID')
