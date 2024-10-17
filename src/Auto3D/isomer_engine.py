@@ -257,7 +257,7 @@ class rd_isomer_sdf(object):
                     n_conformers = min(max(num_heavy_atoms, int(2 * 8.481 * (num_rotatable_bonds **1.642))), 1000)
                 else:
                     n_conformers = self.n_conformers
-                AllChem.EmbedMultipleConfs(mol2, numConfs=n_conformers, randomSeed=42, numThreads=self.np, pruneRmsThresh=self.threshold)
+                AllChem.EmbedMultipleConfs(mol2, numConfs=n_conformers, numThreads=self.np, pruneRmsThresh=self.threshold)
                 #set conformer names
                 name = mol.GetProp('_Name')
                 for i, conf in enumerate(mol2.GetConformers()):
