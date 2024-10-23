@@ -22,10 +22,13 @@ from rdkit.Chem import rdMolAlign, inchi
 from rdkit.Chem.rdMolDescriptors import CalcNumAtomStereoCenters
 from rdkit.Chem.rdMolDescriptors import CalcNumUnspecifiedAtomStereoCenters
 from rdkit.Chem import rdMolDescriptors
+from rdkit.Chem import AllChem
+from rdkit.ML.Cluster import Butina
+
 from typing import List, Tuple, Dict, Union, Optional, Callable
 from Auto3D.utils_file import guess_file_type
 
-#CODATA 2018 energy conversion factor
+# CODATA 2018 energy conversion factor
 hartree2ev = 27.211386245988
 hartree2kcalpermol = 627.50947337481
 ev2kcalpermol = 23.060547830619026
@@ -335,7 +338,7 @@ def enantiomer(l1,  l2):
             indicator = False
             return indicator
     return indicator
-            
+
 def enantiomer_helper(smiles):
     """get non-enantiomer SMILES from given smiles"""
     mols = [Chem.MolFromSmiles(smi) for smi in smiles]
@@ -428,7 +431,6 @@ def check_connectivity(mol:Chem.Mol) -> bool:
     return True
 
 
-
 def filter_unique(mols, crit=0.3):
     """Remove structures that are very similar.
        Remove unconverged structures.
@@ -439,7 +441,7 @@ def filter_unique(mols, crit=0.3):
         unique_mols: unique molecules
     """
 
-    #Remove unconverged structures
+    # Remove unconverged structures
     mols_ = []
     for mol in mols:
         # convergence_flag = str(mol.data['Converged']).lower() == "true"
@@ -449,24 +451,40 @@ def filter_unique(mols, crit=0.3):
             mols_.append(mol)
     mols = mols_
 
-    #Remove similar structures
+    # Remove similar structures
     unique_mols = []
-    for mol_i in mols:
-        unique = True
-        for mol_j in unique_mols:
-            try:
-                # temperoray bug fix for https://github.com/rdkit/rdkit/issues/6826 
-                #removing Hs speeds up the calculation
-                rmsd = rdMolAlign.GetBestRMS(Chem.RemoveHs(mol_i), Chem.RemoveHs(mol_j))  
-            except RuntimeError:
-                rmsd = 0
-            if rmsd < crit:
-                unique = False
-                break
-        if unique:
-            unique_mols.append(mol_i)
+    ## Get the starting mol
+    mol_0 = mols[0]
+    ## iterate over the remaining mols
+    for mol in mols[1:-1]:
+        for conf in mol.GetConformers():
+            mol_0.AddConformer(conf, assignId=True)
+    ## Get the RMS Matrix
+    rmsmatrix = AllChem.GetConformerRMSMatrix(mol)
+    ## Cluster based on RMS
+    clusters = Butina.ClusterData(
+        rmsmatrix, mol.GetNumConformers(), crit, isDistData=True, reordering=True
+    )
+    for cluster in clusters:
+        unique_mols.append(mols[cluster[0]])
+    ## Convert conformers to an array of mols
 
-    
+
+    # for mol_i in mols:
+    #     unique = True
+    #     for mol_j in unique_mols:
+    #         try:
+    #             # temperoray bug fix for https://github.com/rdkit/rdkit/issues/6826
+    #             # removing Hs speeds up the calculation
+    #             rmsd = rdMolAlign.GetBestRMS(Chem.RemoveHs(mol_i), Chem.RemoveHs(mol_j))  
+    #         except RuntimeError:
+    #             rmsd = 0
+    #         if rmsd < crit:
+    #             unique = False
+    #             break
+    #     if unique:
+    #         unique_mols.append(mol_i)
+
     return unique_mols
 
 def no_enantiomer_helper(info1, info2):
