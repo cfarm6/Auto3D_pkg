@@ -279,7 +279,7 @@ def encode_ids(path: str) -> Tuple[str, dict]:
         return new_path, mapping
     
     elif extension == 'sdf':
-        suppl = Chem.SDMolSupplier(path, removeHs=False)
+        suppl = Chem.SDMolSupplier(path, removeHs=Fals, sanitize=False)
         mapping = {}
         with Chem.SDWriter(new_path) as w:
             for i, mol in enumerate(suppl):
