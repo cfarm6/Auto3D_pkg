@@ -464,7 +464,7 @@ def filter_unique(mols, crit=0.3):
     rmsmatrix = AllChem.GetConformerRMSMatrix(mol_0)
     ## Cluster based on RMS
     clusters = Butina.ClusterData(
-        rmsmatrix, mol_0.GetNumConformers(), 0.1, isDistData=True, reordering=True
+        rmsmatrix, mol_0.GetNumConformers(), crit, isDistData=True, reordering=True
     )
     for cluster in clusters:
         unique_mols.append(mols[cluster[0]])
