@@ -446,8 +446,9 @@ def filter_unique(mols, crit=0.3):
     for mol in mols:
         # convergence_flag = str(mol.data['Converged']).lower() == "true"
         convergence_flag = mol.GetProp('Converged').lower() == "true"
-        has_valid_bonds = check_connectivity(mol)
-        if convergence_flag and has_valid_bonds:
+        # DO not check bond formation to match original structure.
+        # has_valid_bonds = check_connectivity(mol)
+        if convergence_flag: # and has_valid_bonds:
             mols_.append(mol)
     mols = mols_
 
@@ -460,10 +461,10 @@ def filter_unique(mols, crit=0.3):
         for conf in mol.GetConformers():
             mol_0.AddConformer(conf, assignId=True)
     ## Get the RMS Matrix
-    rmsmatrix = AllChem.GetConformerRMSMatrix(mol)
+    rmsmatrix = AllChem.GetConformerRMSMatrix(mol_0)
     ## Cluster based on RMS
     clusters = Butina.ClusterData(
-        rmsmatrix, mol.GetNumConformers(), crit, isDistData=True, reordering=True
+        rmsmatrix, mol_0.GetNumConformers(), 0.1, isDistData=True, reordering=True
     )
     for cluster in clusters:
         unique_mols.append(mols[cluster[0]])
@@ -697,7 +698,7 @@ def reorder_sdf(sdf:str, source:str) -> List[Chem.Mol]:
             smiles, id = tuple(line.strip().split())
             ids.append(id)
     elif format == 'sdf':
-        supp = Chem.SDMolSupplier(source, removeHs=False)
+        supp = Chem.SDMolSupplier(source, removeHs=False, sanitize=False)
         for mol in supp:
             id = mol.GetProp('_Name')
             ids.append(id)
@@ -707,7 +708,7 @@ def reorder_sdf(sdf:str, source:str) -> List[Chem.Mol]:
 
     # convert sdf to a Dict[id, List[mols]]
     id_mols = defaultdict(lambda: [])
-    supp = Chem.SDMolSupplier(sdf, removeHs=False)
+    supp = Chem.SDMolSupplier(sdf, removeHs=False, sanitize=False)
     for mol in supp:
         id = mol.GetProp('_Name')
         if '@taut' in id:
