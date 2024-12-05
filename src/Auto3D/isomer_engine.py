@@ -243,7 +243,7 @@ class rd_isomer_sdf(object):
         self.np = np
 
     def run(self):
-        supp = Chem.MultithreadedSDMolSupplier(self.sdf, removeHs=False, numWriterThreads=self.np)
+        supp = Chem.SDMolSupplier(self.sdf, removeHs=False)
         with Chem.SDWriter(self.enumerated_sdf, ) as writer:
             for mol in tqdm(supp):
                 # enumerate conformers
